@@ -10,42 +10,46 @@ import com.liuhe.widget.R
 
 /**
  *
+ * HeaderView管理类
  * @author liuhe
  * @date 2018-04-14
  */
 class HeaderViewManager(var context: Context) {
-    private var headerView: View? = null
-    var txtState: TextView? = null
-    var imgUpArrow: ImageView? = null
-    var imgLoading: ImageView? = null
 
-    private lateinit var upAnim: RotateAnimation
-    lateinit var downAnim: RotateAnimation
-    lateinit var animationDrawable: AnimationDrawable
+    private var headerView: View? = null
+    private var mStateTxt: TextView? = null
+    private var mArrowView: ImageView? = null
+    private var mLoadingView: ImageView? = null
+    private  var mLoadingAnimDrawable: AnimationDrawable? = null
+
+    private lateinit var mUpAnim: RotateAnimation
+    private lateinit var mDownAnim: RotateAnimation
 
     init {
         initAnimation()
     }
 
     private fun initAnimation() {
-        upAnim = RotateAnimation(0f, -180f, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f)
-        upAnim.duration = 100
-        // 动画执行完成后，不会回到原点。
-        upAnim.fillAfter = true
 
-        downAnim = RotateAnimation(-180f, 0f, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f)
-        downAnim.duration = 100
+        mDownAnim = RotateAnimation(-180f, 0f, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f)
+        mDownAnim.duration = 100
         // 动画执行完成后，不会回到原点。
-        downAnim.fillAfter = true
+        mDownAnim.fillAfter = true
+
+        mUpAnim = RotateAnimation(0f, -180f, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f)
+        mUpAnim.duration = 100
+        // 动画执行完成后，不会回到原点。
+        mUpAnim.fillAfter = true
     }
 
     fun getHeaderView(): View? {
         if (null == headerView) {
             headerView = View.inflate(context, R.layout.view_refresh_header_normal, null)
-            txtState = headerView?.findViewById(R.id.tv_normal_refresh_header_status)
-            imgUpArrow = headerView?.findViewById(R.id.iv_normal_refresh_header_arrow)
-            imgLoading = headerView?.findViewById(R.id.iv_normal_refresh_header_chrysanthemum)
-            animationDrawable = imgLoading?.drawable as AnimationDrawable
+            mStateTxt = headerView?.findViewById(R.id.txt_refresh_header_status)
+            mArrowView = headerView?.findViewById(R.id.iv_refresh_header_arrow)
+            mLoadingView = headerView?.findViewById(R.id.iv_refresh_header_loading)
+
+            mLoadingAnimDrawable = mLoadingView?.drawable as AnimationDrawable
         }
         return headerView
     }
@@ -54,21 +58,25 @@ class HeaderViewManager(var context: Context) {
     }
 
     fun changeToPullDown() {
-        txtState?.text = "下拉刷新"
-        imgLoading?.animation = downAnim
+        mStateTxt?.text = "下拉刷新"
+        mArrowView?.startAnimation(mDownAnim)
+        mLoadingView?.visibility = View.INVISIBLE
+
     }
 
     fun changeToReleaseRefresh() {
-        txtState?.text = "释放刷新"
-        imgUpArrow?.animation = upAnim
+        mStateTxt?.text = "释放刷新"
+        mArrowView?.startAnimation(mUpAnim)
+        mLoadingView?.visibility = View.INVISIBLE
     }
 
     fun changeToRefreshing() {
-        txtState?.text = "刷新中"
+        mStateTxt?.text = "刷新中"
         // 控件身上执行过动画，需要先清除动画，后设置隐藏才会生效
-        imgUpArrow?.clearAnimation()
-        imgUpArrow?.visibility = View.INVISIBLE
-        imgLoading?.visibility=View.VISIBLE
-        animationDrawable.start()
+        mArrowView?.clearAnimation()
+        mArrowView?.visibility = View.INVISIBLE
+
+        mLoadingView?.visibility = View.VISIBLE
+        mLoadingAnimDrawable?.start()
     }
 }

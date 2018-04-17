@@ -2,7 +2,9 @@ package com.liuhe.widget
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.support.v7.widget.LinearLayoutManager
+import android.view.animation.RotateAnimation
 import com.liuhe.widget.adapter.MsgAdapter
 import com.liuhe.widget.bean.Msg
 import com.liuhe.widget.bean.PieData
@@ -33,10 +35,29 @@ class MainActivity : AppCompatActivity() {
         mockRcy()
 
         mockPullRefresh()
+
+        mockAnimation()
+
+    }
+
+    private fun mockAnimation() {
+        /**
+         * @param fromDegress 开始角度
+         * @param toDEgress 结束角度
+         * 后边四个参数确定中心点
+         */
+        var downAnim = RotateAnimation(-180f, 0f, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f)
+        downAnim.duration = 600
+        // 动画执行完成后，会回到原点。
+        downAnim.fillAfter = false
+
+        iv_refresh_arrow.setOnClickListener {
+            iv_refresh_arrow.startAnimation(downAnim)
+        }
     }
 
     private fun mockPullRefresh() {
-        pull_to_refresh.setupHeaderViewManger()
+        pull_to_refresh?.initHeaderViewManager()
     }
 
 

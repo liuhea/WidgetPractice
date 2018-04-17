@@ -15,11 +15,11 @@ import com.liuhe.widget.utils.log
  * 万能刷新
  *
  * 1. 三个参数构造函数，直接crash: Caused by: java.lang.NoSuchMethodException: <init> [class android.content.Context, interface android.util.AttributeSet]
- * 2.
  * @author liuhe
  * @date 2018-04-14
  */
 class PullToRefresh @JvmOverloads constructor(private var mContext: Context, attrs: AttributeSet? = null) : LinearLayout(mContext, attrs) {
+
     val TAG = "PullToRefresh"
 
     private lateinit var mHeaderView: LinearLayout
@@ -58,16 +58,15 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
         IDLE, PULL_DOWN, RELEASE_REFRESH, REFRESHING
     }
 
-    var currentState: RefreshState = RefreshState.IDLE
+    private var currentState: RefreshState = RefreshState.IDLE
     private lateinit var headerViewManager: HeaderViewManager
-
 
     init {
         orientation = VERTICAL
-        setupHeaderView()
+        initHeaderView()
     }
 
-    private fun setupHeaderView() {
+    private fun initHeaderView() {
         mHeaderView = LinearLayout(mContext).apply {
             layoutParams = LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             setBackgroundColor(Color.GREEN)
@@ -76,7 +75,10 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
         addView(mHeaderView)
     }
 
-    fun setupHeaderViewManger() {
+    /**
+     * 初始化header头管理器
+     */
+    fun initHeaderViewManager() {
         headerViewManager = HeaderViewManager(mContext)
         val refreshView = headerViewManager.getHeaderView()
         // 处于视图的加载阶段，并未对视图进行测量，想要获取测量高度，需要提前测量。
@@ -106,7 +108,43 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
         return super.onTouchEvent(event)
     }
 
+    private fun handleActionMove(event: MotionEvent): Boolean {
+        val moveY = event.y
+        val dy = moveY - downY
+
+//        "$TAG moveY=$moveY dy=$dy".log()
+
+        if (dy > 0) {
+            var paddingTop = (dy / dragRadio + minHeaderViewPaddingTop).toInt()
+            // 阻尼效果：类似于弹簧的效果，随着距离越来越长，拉动越来越难。
+            // dy非线性变化即可出现这种效果
+
+            // 判断如果paddingTop>maxHeaderViewPaddingTop，就不能再滑动了
+            paddingTop = Math.min(paddingTop, maxHeaderViwPaddingTop)
+            "$TAG paddingTop=$paddingTop".log()
+
+            // 静止、下拉、释放刷新、刷新状态
+            if (paddingTop < 0 && currentState != RefreshState.PULL_DOWN) {
+                currentState = RefreshState.PULL_DOWN
+                "$TAG 下拉刷新".log()
+                handleRefreshStatesChanged(currentState)
+
+            } else if (paddingTop >= 0 && currentState != RefreshState.RELEASE_REFRESH) {
+                currentState = RefreshState.RELEASE_REFRESH
+                "$TAG 释放刷新".log()
+                handleRefreshStatesChanged(currentState)
+            }
+
+            mHeaderView.setPadding(0, paddingTop, 0, 0)
+            return true
+        }
+        return false
+    }
+
+
     private fun handleActionUp(): Boolean {
+        "$TAG $currentState".log()
+
         when (currentState) {
             RefreshState.PULL_DOWN -> {
                 hiddenRefreshView()
@@ -123,28 +161,9 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
 
     }
 
-    private fun changeHeaderViewPaddingTopToZero() {
-        ValueAnimator.ofInt(mHeaderView.paddingTop, 0).apply {
-            addUpdateListener {
-                //获取值动画在动画变化过程中的值
-                mHeaderView.setPadding(0, it.animatedValue as Int, 0, 0)
-            }
-            duration = 300
-        }.start()
-
-    }
-
-    private fun hiddenRefreshView() {
-        ValueAnimator.ofInt(mHeaderView.paddingTop, minHeaderViewPaddingTop).apply {
-            addUpdateListener {
-                //获取值动画在动画变化过程中的值
-
-                mHeaderView.setPadding(0, it.animatedValue as Int, 0, 0)
-            }
-            duration = 300
-        }.start()
-    }
-
+    /**
+     * 处理刷新状态
+     */
     private fun handleRefreshStatesChanged(currentState: RefreshState) {
         when (currentState) {
             RefreshState.IDLE -> {
@@ -162,31 +181,25 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
         }
     }
 
-    private fun handleActionMove(event: MotionEvent): Boolean {
-        val moveY = event.y
-        val dy = moveY - downY
-        if (dy > 0) {
-            var paddingTop = (dy / dragRadio + minHeaderViewPaddingTop).toInt()
-            // 阻尼效果：类似于弹簧的效果，随着距离越来越长，拉动越来越难。
-            // dy非线性变化即可出现这种效果
+    private fun changeHeaderViewPaddingTopToZero() {
+        postDelayed({ hiddenRefreshView() }, 350)
+//        ValueAnimator.ofInt(mHeaderView.paddingTop, minHeaderViewPaddingTop).apply {
+//            addUpdateListener {
+//                //获取值动画在动画变化过程中的值
+//                mHeaderView.setPadding(0, it.animatedValue as Int, 0, 0)
+//            }
+//            duration = 600
+//        }.start()
+    }
 
-            // 判断如果paddingTop>maxHeaderViewPaddingTop，就不能再滑动了
-            paddingTop = Math.min(paddingTop, maxHeaderViwPaddingTop)
-
-            // 静止、下拉、释放刷新、刷新状态
-            if (paddingTop < 0 && currentState != RefreshState.PULL_DOWN) {
-                currentState = RefreshState.PULL_DOWN
-
-                handleRefreshStatesChanged(currentState)
-            } else if (paddingTop >= 0 && currentState != RefreshState.RELEASE_REFRESH) {
-                currentState = RefreshState.RELEASE_REFRESH
-                "释放刷新".log()
+    private fun hiddenRefreshView() {
+        ValueAnimator.ofInt(mHeaderView.paddingTop, minHeaderViewPaddingTop).apply {
+            addUpdateListener {
+                //获取值动画在动画变化过程中的值
+                mHeaderView.setPadding(0, it.animatedValue as Int, 0, 0)
             }
-
-            mHeaderView.setPadding(0, paddingTop, 0, 0)
-            return true
-        }
-        return false
+            duration = 300
+        }.start()
     }
 
 
