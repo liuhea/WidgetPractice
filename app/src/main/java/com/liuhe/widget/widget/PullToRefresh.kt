@@ -7,9 +7,14 @@ import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
+import android.widget.AbsListView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import com.liuhe.widget.utils.HeaderViewManager
 import com.liuhe.widget.utils.log
+import com.liuhe.widget.utils.RefreshScrollingUtil
+
 
 /**
  * 万能刷新
@@ -60,6 +65,14 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
 
     private var currentState: RefreshState = RefreshState.IDLE
     private lateinit var headerViewManager: HeaderViewManager
+
+    private var interceptDownX: Float = 0f
+    private var interceptDownY: Float = 0f
+
+    /**
+     * 子View,用来判断是否滑动到子View顶部位置
+     */
+    private var contentView: View? = null
 
     init {
         orientation = VERTICAL
@@ -112,29 +125,33 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
         val moveY = event.y
         val dy = moveY - downY
 
-//        "$TAG moveY=$moveY dy=$dy".log()
-
+        "$TAG moveY=$moveY dy=$dy".log()
+        /*
+        向下滑动瞬间跳出头部视图
+        由于down事件被RecyclerView消费掉,当RefreshLayout拿到事件已经变为move了,故:downY无法获取到值,应该在handleActionMove方法中给downY继续赋值
+         */
+        if (downY == 0f) {
+            downY = event.y
+        }
         if (dy > 0) {
             var paddingTop = (dy / dragRadio + minHeaderViewPaddingTop).toInt()
             // 阻尼效果：类似于弹簧的效果，随着距离越来越长，拉动越来越难。
             // dy非线性变化即可出现这种效果
 
-            // 判断如果paddingTop>maxHeaderViewPaddingTop，就不能再滑动了
-            paddingTop = Math.min(paddingTop, maxHeaderViwPaddingTop)
-            "$TAG paddingTop=$paddingTop".log()
-
             // 静止、下拉、释放刷新、刷新状态
             if (paddingTop < 0 && currentState != RefreshState.PULL_DOWN) {
                 currentState = RefreshState.PULL_DOWN
                 "$TAG 下拉刷新".log()
-                handleRefreshStatesChanged(currentState)
+                handleRefreshStatesChanged()
 
             } else if (paddingTop >= 0 && currentState != RefreshState.RELEASE_REFRESH) {
                 currentState = RefreshState.RELEASE_REFRESH
                 "$TAG 释放刷新".log()
-                handleRefreshStatesChanged(currentState)
+                handleRefreshStatesChanged()
             }
-
+            // 判断如果paddingTop>maxHeaderViewPaddingTop，就不能再滑动了
+            paddingTop = Math.min(paddingTop, maxHeaderViwPaddingTop)
+            //不断的设置paddingTop,来达到将头部拉出的目的
             mHeaderView.setPadding(0, paddingTop, 0, 0)
             return true
         }
@@ -144,6 +161,11 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
 
     private fun handleActionUp(): Boolean {
         "$TAG $currentState".log()
+        /*
+        * 第一次滑动后抬起,第二次滑动的down的位置向上偏移,此时向下滑动,一段距离没有任何反应,直到第一次滑动的down的位置才有效果
+        * 原因:由于第二次滑动时,downY采用上一次的downY造成
+         */
+        downY = 0f
 
         when (currentState) {
             RefreshState.PULL_DOWN -> {
@@ -153,7 +175,7 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
             RefreshState.RELEASE_REFRESH -> {
                 currentState = RefreshState.REFRESHING
                 changeHeaderViewPaddingTopToZero()
-                handleRefreshStatesChanged(currentState)
+                handleRefreshStatesChanged()
             }
         }
         // 只要头部拉出一点点，up事件就由当前控件处理
@@ -164,7 +186,7 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     /**
      * 处理刷新状态
      */
-    private fun handleRefreshStatesChanged(currentState: RefreshState) {
+    private fun handleRefreshStatesChanged() {
         when (currentState) {
             RefreshState.IDLE -> {
                 headerViewManager.changeToIdle()
@@ -204,15 +226,54 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
 
 
     /**
+     * 处理ContentView是RecyclerView等情况
+     */
+    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+        when (ev?.action) {
+            MotionEvent.ACTION_DOWN -> {
+                interceptDownX = ev.x
+                interceptDownY = ev.y
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                val dY = ev.y - interceptDownY
+                //1,y方向的变化:y方向的变化量>x方向的变化量
+                if (Math.abs(ev.x - interceptDownX) < Math.abs(dY)) {
+                    //2,y方向向下滑动
+                    if (dY > 0 && handleScrollTop()) {
+                        return true
+                    }
+                }
+            }
+
+            MotionEvent.ACTION_UP -> {
+            }
+        }
+        return super.onInterceptTouchEvent(ev)
+    }
+
+
+    /**
      * 当前控件及子控件全部加载完毕，调用的方法
      */
     override fun onFinishInflate() {
         super.onFinishInflate()
         // ViewHeader作为第0个子View
-        val contentView = getChildAt(1)
-        if (contentView is RecyclerView) {
+        contentView = getChildAt(1)
 
+    }
+
+    /**
+     * 判断子视图是否滑动到屏幕顶部
+     */
+    private fun handleScrollTop(): Boolean {
+        return when (contentView) {
+            is RecyclerView -> RefreshScrollingUtil.isRecyclerViewToTop(contentView as RecyclerView)
+            is AbsListView -> RefreshScrollingUtil.isAbsListViewToTop(contentView as AbsListView)
+            is ScrollView -> RefreshScrollingUtil.isScrollViewOrWebViewToTop(contentView)
+            else -> false
         }
     }
 }
+
 

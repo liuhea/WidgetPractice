@@ -10,10 +10,15 @@
         android:visibility="visible"
         android:layout_height="match_parent">
 
-        <TextView
-            android:text="Inner PullToRefresh"
+        <!--<TextView-->
+            <!--android:text="Inner PullToRefresh"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content" />-->
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rcy_pull_main"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent"></android.support.v7.widget.RecyclerView>
     </com.liuhe.widget.widget.PullToRefresh>
 
 

@@ -20,7 +20,7 @@ class HeaderViewManager(var context: Context) {
     private var mStateTxt: TextView? = null
     private var mArrowView: ImageView? = null
     private var mLoadingView: ImageView? = null
-    private  var mLoadingAnimDrawable: AnimationDrawable? = null
+    private var mLoadingAnimDrawable: AnimationDrawable? = null
 
     private lateinit var mUpAnim: RotateAnimation
     private lateinit var mDownAnim: RotateAnimation
@@ -79,4 +79,10 @@ class HeaderViewManager(var context: Context) {
         mLoadingView?.visibility = View.VISIBLE
         mLoadingAnimDrawable?.start()
     }
+
+
+    fun endRefreshing() {}
+
+
+    fun handleScale(scale: Float) {}
 }

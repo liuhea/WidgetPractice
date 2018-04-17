@@ -58,6 +58,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun mockPullRefresh() {
         pull_to_refresh?.initHeaderViewManager()
+        var rcyData = mutableListOf<Msg>()
+        for (i in 0..20) {
+            rcyData.add(Msg("标题$i", i))
+        }
+        rcy_pull_main?.layoutManager = LinearLayoutManager(this)
+        rcy_pull_main?.adapter = MsgAdapter(this, rcyData)
     }
 
 
