@@ -204,14 +204,14 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     }
 
     private fun changeHeaderViewPaddingTopToZero() {
-        postDelayed({ hiddenRefreshView() }, 350)
-//        ValueAnimator.ofInt(mHeaderView.paddingTop, minHeaderViewPaddingTop).apply {
-//            addUpdateListener {
-//                //获取值动画在动画变化过程中的值
-//                mHeaderView.setPadding(0, it.animatedValue as Int, 0, 0)
-//            }
-//            duration = 600
-//        }.start()
+//        postDelayed({ hiddenRefreshView() }, 350)
+        ValueAnimator.ofInt(mHeaderView.paddingTop, 0).apply {
+            addUpdateListener {
+                //获取值动画在动画变化过程中的值
+                mHeaderView.setPadding(0, it.animatedValue as Int, 0, 0)
+            }
+            duration = 300
+        }.start()
     }
 
     private fun hiddenRefreshView() {
@@ -273,6 +273,14 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
             is ScrollView -> RefreshScrollingUtil.isScrollViewOrWebViewToTop(contentView)
             else -> false
         }
+    }
+
+    fun endRefreshing() {
+        hiddenRefreshView()
+        currentState = RefreshState.IDLE
+        handleRefreshStatesChanged()
+        //做HeaderView的还原处理
+        headerViewManager.endRefreshing()
     }
 }
 
