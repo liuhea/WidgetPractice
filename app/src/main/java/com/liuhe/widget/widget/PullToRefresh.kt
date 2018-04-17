@@ -11,7 +11,7 @@ import android.view.View
 import android.widget.AbsListView
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import com.liuhe.widget.utils.HeaderViewManager
+import com.liuhe.widget.utils.BaseHeaderViewManager
 import com.liuhe.widget.utils.log
 import com.liuhe.widget.utils.RefreshScrollingUtil
 
@@ -64,7 +64,7 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     }
 
     private var currentState: RefreshState = RefreshState.IDLE
-    private lateinit var headerViewManager: HeaderViewManager
+    private var mHeaderViewManager: BaseHeaderViewManager? = null
 
     private var interceptDownX: Float = 0f
     private var interceptDownY: Float = 0f
@@ -73,6 +73,9 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
      * 子View,用来判断是否滑动到子View顶部位置
      */
     private var contentView: View? = null
+
+    private var refreshingListener: OnRefreshingListener? = null
+
 
     init {
         orientation = VERTICAL
@@ -91,14 +94,11 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     /**
      * 初始化header头管理器
      */
-    fun initHeaderViewManager() {
-        headerViewManager = HeaderViewManager(mContext)
-        val refreshView = headerViewManager.getHeaderView()
-        // 处于视图的加载阶段，并未对视图进行测量，想要获取测量高度，需要提前测量。
-        // 当measure(0,0)=measure（0+0，0+0）,即MeasureSpec.UNSPECIFIED,但是控件又不可能为0，那么就会去测量refreshView中具有高度的控件，此时refreshView就被计算了高度
-        refreshView?.measure(0, 0)
-        minHeaderViewPaddingTop = -refreshView?.measuredHeight!!
-        maxHeaderViwPaddingTop = (refreshView.measuredHeight * maxHeaderViwPaddingTopRadio).toInt()
+    fun initHeaderViewManager(headerViewManager: BaseHeaderViewManager) {
+        mHeaderViewManager = headerViewManager
+        val refreshView = headerViewManager.getHeader()
+        minHeaderViewPaddingTop = -headerViewManager?.getHeaderViewHeight()
+        maxHeaderViwPaddingTop = (refreshView?.measuredHeight?.times(maxHeaderViwPaddingTopRadio))!!.toInt()
 
         mHeaderView.setPadding(0, minHeaderViewPaddingTop, 0, 0)
         mHeaderView.addView(refreshView)
@@ -122,11 +122,16 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     }
 
     private fun handleActionMove(event: MotionEvent): Boolean {
+        // bug1->防止刷新中时候，可以头部多次拉动问题
+        if (currentState == RefreshState.REFRESHING) {
+            return false
+        }
+
         val moveY = event.y
         val dy = moveY - downY
 
         "$TAG moveY=$moveY dy=$dy".log()
-        /*
+        /* bug2->
         向下滑动瞬间跳出头部视图
         由于down事件被RecyclerView消费掉,当RefreshLayout拿到事件已经变为move了,故:downY无法获取到值,应该在handleActionMove方法中给downY继续赋值
          */
@@ -139,10 +144,16 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
             // dy非线性变化即可出现这种效果
 
             // 静止、下拉、释放刷新、刷新状态
-            if (paddingTop < 0 && currentState != RefreshState.PULL_DOWN) {
-                currentState = RefreshState.PULL_DOWN
+            if (paddingTop < 0) {
                 "$TAG 下拉刷新".log()
-                handleRefreshStatesChanged()
+
+                if (currentState != RefreshState.PULL_DOWN) {
+                    currentState = RefreshState.PULL_DOWN
+                    handleRefreshStatesChanged()
+                }
+                // 处理美团header缩放
+                var scale = 1 - paddingTop * 1.0f / minHeaderViewPaddingTop
+                mHeaderViewManager?.handleScale(scale)
 
             } else if (paddingTop >= 0 && currentState != RefreshState.RELEASE_REFRESH) {
                 currentState = RefreshState.RELEASE_REFRESH
@@ -189,16 +200,17 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     private fun handleRefreshStatesChanged() {
         when (currentState) {
             RefreshState.IDLE -> {
-                headerViewManager.changeToIdle()
+                mHeaderViewManager?.changeToIdle()
             }
             RefreshState.PULL_DOWN -> {
-                headerViewManager.changeToPullDown()
+                mHeaderViewManager?.changeToPullDown()
             }
             RefreshState.RELEASE_REFRESH -> {
-                headerViewManager.changeToReleaseRefresh()
+                mHeaderViewManager?.changeToReleaseRefresh()
+                refreshingListener?.onRefresh()
             }
             RefreshState.REFRESHING -> {
-                headerViewManager.changeToRefreshing()
+                mHeaderViewManager?.changeToRefreshing()
             }
         }
     }
@@ -278,9 +290,16 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     fun endRefreshing() {
         hiddenRefreshView()
         currentState = RefreshState.IDLE
-        handleRefreshStatesChanged()
         //做HeaderView的还原处理
-        headerViewManager.endRefreshing()
+        handleRefreshStatesChanged()
+    }
+
+    fun setRefreshingListener(listener: OnRefreshingListener) {
+        refreshingListener = listener
+    }
+
+    interface OnRefreshingListener {
+        fun onRefresh()
     }
 }
 

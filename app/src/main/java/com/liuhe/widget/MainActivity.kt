@@ -6,9 +6,12 @@ import android.os.Handler
 import android.support.v7.widget.LinearLayoutManager
 import android.view.animation.RotateAnimation
 import com.liuhe.widget.adapter.MsgAdapter
+import com.liuhe.widget.adapter.MyAdapter
 import com.liuhe.widget.bean.Msg
 import com.liuhe.widget.bean.PieData
+import com.liuhe.widget.utils.MTHeaderViewManager
 import com.liuhe.widget.utils.log
+import com.liuhe.widget.widget.PullToRefresh
 import kotlinx.android.synthetic.main.activity_circle_menu.*
 import kotlinx.android.synthetic.main.activity_drag_circle.*
 import kotlinx.android.synthetic.main.activity_pie.*
@@ -57,13 +60,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun mockPullRefresh() {
-        pull_to_refresh?.initHeaderViewManager()
-        var rcyData = mutableListOf<Msg>()
+        pull_to_refresh?.initHeaderViewManager(MTHeaderViewManager(this))
+        var rcyData = mutableListOf<String>()
         for (i in 0..20) {
-            rcyData.add(Msg("标题$i", i))
+            rcyData.add("标题$i")
         }
         rcy_pull_main?.layoutManager = LinearLayoutManager(this)
-        rcy_pull_main?.adapter = MsgAdapter(this, rcyData)
+        rcy_pull_main?.adapter = MyAdapter(rcyData)
+
+        val handler = Handler()
+        pull_to_refresh.setRefreshingListener(object : PullToRefresh.OnRefreshingListener {
+            override fun onRefresh() {
+                handler.postDelayed({
+                    pull_to_refresh.endRefreshing()
+                }, 2000)
+            }
+        })
     }
 
 
