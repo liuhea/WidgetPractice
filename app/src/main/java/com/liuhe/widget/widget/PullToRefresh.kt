@@ -49,7 +49,7 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     private val dragRadio = 1.8f
 
     /**
-     *
+     * 手指按下时y坐标
      */
     private var downY = 0f
 
@@ -122,22 +122,26 @@ class PullToRefresh @JvmOverloads constructor(private var mContext: Context, att
     }
 
     private fun handleActionMove(event: MotionEvent): Boolean {
-        // bug1->防止刷新中时候，可以头部多次拉动问题
+        /*
+        bug1->防止刷新中时候，可以头部多次拉动问题
+         */
         if (currentState == RefreshState.REFRESHING) {
             return false
+        }
+
+        /* bug2->
+        向下滑动瞬间跳出头部视图
+        由于down事件被RecyclerView消费掉,当PullToRefresh拿到事件已经变为move了,故:downY无法获取到值,应该在handleActionMove方法中给downY继续赋值
+         */
+        if (downY == 0f) {
+            downY = event.y
         }
 
         val moveY = event.y
         val dy = moveY - downY
 
         "$TAG moveY=$moveY dy=$dy".log()
-        /* bug2->
-        向下滑动瞬间跳出头部视图
-        由于down事件被RecyclerView消费掉,当RefreshLayout拿到事件已经变为move了,故:downY无法获取到值,应该在handleActionMove方法中给downY继续赋值
-         */
-        if (downY == 0f) {
-            downY = event.y
-        }
+
         if (dy > 0) {
             var paddingTop = (dy / dragRadio + minHeaderViewPaddingTop).toInt()
             // 阻尼效果：类似于弹簧的效果，随着距离越来越长，拉动越来越难。
