@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.liuhe.widget.widget.PullToRefresh
+        android:layout_width="match_parent"
+        android:id="@+id/pull_to_refresh"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:text="Inner PullToRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </com.liuhe.widget.widget.PullToRefresh>
+</android.support.constraint.ConstraintLayout>

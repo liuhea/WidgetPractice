@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SwitchView">
+        <!--
+        attr表示属性
+        name： 属性名
+        format 表示属性的类型，boolean,string,color..
+        enum 枚举，可以限定使用者传入的值只能为enum限定的值。
+        -->
+        <attr name="my_background" format="enum">
+            <enum name="first" value="0"></enum>
+            <enum name="middle" value="1"></enum>
+            <enum name="last" value="2"></enum>
+        </attr>
+
+        <attr name="my_title" format="string"></attr>
+        <attr name="is_toggle" format="boolean"></attr>
+    </declare-styleable>
+</resources>
