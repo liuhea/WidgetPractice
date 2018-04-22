@@ -37,4 +37,10 @@ ext {
 
     // App dependencies
     supportLibraryVersion = '26.1.0'
+    constraintLayoutVersion = '1.0.2'
+
+    // test
+    runnerVersion = '1.0.1'
+    espressoVersion = '3.0.1'
+    junitVersion='4.12'
 }
