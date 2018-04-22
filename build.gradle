@@ -29,6 +29,8 @@ task clean(type: Delete) {
 
 // Define versions in a single place
 ext {
+    versionName = "1.0.0"
+    versionCode = 1000
     // Sdk and tools
     // Support library and architecture components support minSdk 14 and above.
     minSdkVersion = 15
@@ -42,5 +44,5 @@ ext {
     // test
     runnerVersion = '1.0.1'
     espressoVersion = '3.0.1'
-    junitVersion='4.12'
+    junitVersion = '4.12'
 }
