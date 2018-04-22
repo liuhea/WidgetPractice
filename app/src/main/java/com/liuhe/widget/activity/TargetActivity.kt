@@ -1,16 +1,17 @@
-package com.liuhe.widget
+package com.liuhe.widget.activity
 
-import android.support.v7.app.AppCompatActivity
-import android.os.Bundle
+import android.content.Context
+import android.content.Intent
 import android.os.Handler
 import android.support.v7.widget.LinearLayoutManager
 import android.view.animation.RotateAnimation
+import com.liuhe.widget.R
+import com.liuhe.widget.adapter.ListAdapter
 import com.liuhe.widget.adapter.MsgAdapter
-import com.liuhe.widget.adapter.MyAdapter
 import com.liuhe.widget.bean.Msg
 import com.liuhe.widget.bean.PieData
+import com.liuhe.widget.constans.BUNDLE_KEY_LAYOUTID
 import com.liuhe.widget.utils.MTHeaderViewManager
-import com.liuhe.widget.utils.log
 import com.liuhe.widget.widget.PullToRefresh
 import kotlinx.android.synthetic.main.activity_circle_menu.*
 import kotlinx.android.synthetic.main.activity_drag_circle.*
@@ -19,28 +20,31 @@ import kotlinx.android.synthetic.main.activity_pull_refresh.*
 import kotlinx.android.synthetic.main.activity_rcy.*
 import kotlinx.android.synthetic.main.activity_switch.*
 
+/**
+ * @author liuhe
+ */
+class TargetActivity : BaseActivity() {
+    companion object {
+        fun start(context: Context, layoutId: Int) {
+            val intent = Intent(context, TargetActivity::class.java).apply {
+                putExtra(BUNDLE_KEY_LAYOUTID, layoutId)
+            }
+            context.startActivity(intent)
+        }
+    }
 
-class MainActivity : AppCompatActivity() {
+    override fun getLayoutResID(): Int {
+        return intent.getIntExtra(BUNDLE_KEY_LAYOUTID, 0)
+    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_pull_refresh)
-        "onCreate()执行完毕".log()
-
+    override fun initData() {
         mockPieData()
-
         mockCircleMenuData()
-
         mockSwitch()
-
         mockDragCircle()
-
         mockRcy()
-
         mockPullRefresh()
-
         mockAnimation()
-
     }
 
     private fun mockAnimation() {
@@ -54,8 +58,8 @@ class MainActivity : AppCompatActivity() {
         // 动画执行完成后，会回到原点。
         downAnim.fillAfter = false
 
-        iv_refresh_arrow.setOnClickListener {
-            iv_refresh_arrow.startAnimation(downAnim)
+        iv_refresh_arrow?.setOnClickListener {
+            iv_refresh_arrow?.startAnimation(downAnim)
         }
     }
 
@@ -66,10 +70,10 @@ class MainActivity : AppCompatActivity() {
             rcyData.add("标题$i")
         }
         rcy_pull_main?.layoutManager = LinearLayoutManager(this)
-        rcy_pull_main?.adapter = MyAdapter(rcyData)
+        rcy_pull_main?.adapter = ListAdapter(rcyData as ArrayList<String>)
 
         val handler = Handler()
-        pull_to_refresh.setRefreshingListener(object : PullToRefresh.OnRefreshingListener {
+        pull_to_refresh?.setRefreshingListener(object : PullToRefresh.OnRefreshingListener {
             override fun onRefresh() {
                 handler.postDelayed({
                     pull_to_refresh.endRefreshing()
@@ -128,30 +132,5 @@ class MainActivity : AppCompatActivity() {
         }
         pie_main?.setData(pies)
     }
-
-
-    override fun onStart() {
-        super.onStart()
-        "onStart()执行完毕".log()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        "onResume()执行完毕".log()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        "onPause()执行完毕".log()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        "onStop()执行完毕".log()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        "onDestroy()执行完毕".log()
-    }
 }
+

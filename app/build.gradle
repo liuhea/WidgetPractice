@@ -31,4 +31,6 @@ dependencies {
     implementation 'com.android.support:recyclerview-v7:' + rootProject.ext.supportLibraryVersion
     implementation 'com.android.support:appcompat-v7:' + rootProject.ext.supportLibraryVersion
 
+    implementation 'com.umeng.analytics:analytics:latest.integration'
+
 }
