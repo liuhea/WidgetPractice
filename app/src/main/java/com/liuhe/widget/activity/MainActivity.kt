@@ -7,6 +7,9 @@ import com.liuhe.widget.R
 import com.liuhe.widget.adapter.ListAdapter
 import com.liuhe.widget.constans.targetLayoutIds
 import com.liuhe.widget.constans.targetNames
+import android.support.v7.widget.DividerItemDecoration
+
+
 
 /**
  * @author liuhe
@@ -21,6 +24,7 @@ class MainActivity : BaseActivity(), ListAdapter.OnItemClickListener {
         mRcyView = findViewById(R.id.rcy_main_list)
 
         mRcyView.layoutManager = LinearLayoutManager(this)
+        mRcyView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
         mRcyView.adapter = ListAdapter(targetNames).apply {
             itemClickListener = this@MainActivity
         }

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import com.liuhe.widget.R
 
 /**
  * @author liuhe
@@ -14,21 +15,23 @@ class ListAdapter(private val data: List<String>) : RecyclerView.Adapter<ListAda
     var itemClickListener: OnItemClickListener? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, null)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_list_adapter, null)
         return MyViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        holder.tv.text = data[position]
-        holder.itemView.setOnClickListener {
-            itemClickListener?.onItemClick(position)
+        with(holder) {
+            tv.text = data[position]
+            tv.setOnClickListener {
+                itemClickListener?.onItemClick(position)
+            }
         }
     }
 
     override fun getItemCount(): Int = data?.size
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val tv: TextView = itemView.findViewById(android.R.id.text1)
+        val tv: TextView = itemView.findViewById(R.id.tv_adapter)
     }
 
     interface OnItemClickListener {
